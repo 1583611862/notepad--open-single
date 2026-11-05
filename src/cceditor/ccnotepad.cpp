@@ -8503,6 +8503,33 @@ static const ULONG_PTR CUSTOM_TYPE = 10000;
 static const ULONG_PTR OPEN_NOTEPAD_TYPE = 10001;
 static const ULONG_PTR CUSTOM_TYPE_FILE_LINENUM = 10002;
 
+//把窗口强制带到前台并激活。
+//单独调用 activateWindow 会被 Windows 前台锁定策略拒绝（调用方不是前台进程时窗口只在任务栏闪烁）。
+//双端配合：发送端(main.cpp)先 AllowSetForegroundWindow 转授权限，此处再 TOPMOST 往复强制 z 序到顶，
+//即使激活仍被系统拒绝，窗口也保证可见、不被其它窗口遮挡。
+static void forceWindowToFront(QWidget* w)
+{
+	if (w == nullptr)
+	{
+		return;
+	}
+
+	//仅清除最小化状态，保留最大化状态（不能用 showNormal，会把最大化窗口还原）
+	if (w->isMinimized())
+	{
+		w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+	}
+
+	w->show();
+	w->raise();
+	w->activateWindow();
+
+	HWND hwnd = (HWND)w->winId();
+	::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	::SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	::SetForegroundWindow(hwnd);
+}
+
 bool CCNotePad::nativeOpenfile(QString openFilePath, int lineNum)
 {
 	getRegularFilePath(openFilePath);
@@ -8537,26 +8564,7 @@ bool CCNotePad::nativeOpenfile(QString openFilePath, int lineNum)
 		return false;
 	}
 
-	//窗口如果最小化，则在任务栏下面闪动
-	QApplication::alert(pTargetPad);
-
-	//发现在release模式下，必须要先最小再最大，窗口才能跑到最前面。而调试时则没有该现象。可能是哪里有个问题。
-	if (!pTargetPad->isMinimized())
-	{
-		pTargetPad->showMinimized();
-	}
-
-	if (pTargetPad->isMaximized())
-	{
-		pTargetPad->showMaximized();
-	}
-	else
-	{
-		pTargetPad->showNormal();
-	}
-
-	pTargetPad->activateWindow();
-	pTargetPad->raise();
+	forceWindowToFront(pTargetPad);
 	return true;
 }
 bool CCNotePad::nativeEvent(const QByteArray & eventType, void * message, long * result)
@@ -8578,8 +8586,7 @@ bool CCNotePad::nativeEvent(const QByteArray & eventType, void * message, long *
 			}
 			else if (cds->dwData == OPEN_NOTEPAD_TYPE)
 			{
-				activateWindow();
-				QApplication::alert(this);
+				forceWindowToFront(this);
 
 				*result = 1;
 				return true;

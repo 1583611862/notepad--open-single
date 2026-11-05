@@ -33,6 +33,19 @@ const ULONG_PTR CUSTOM_TYPE = 10000;
 const ULONG_PTR OPEN_NOTEPAD_TYPE = 10001;
 const ULONG_PTR CUSTOM_TYPE_FILE_LINENUM = 10002;
 bool s_isAdminAuth = false;
+
+//第二实例在发 WM_COPYDATA 前把前台设置权转授给已有实例。
+//否则已有实例是后台进程，activateWindow/SetForegroundWindow 会被系统前台锁定策略拒绝，
+//表现为双击文件打开后窗口只在任务栏闪烁、无法置顶。
+static void allowFirstInstanceForeground(HWND hwnd)
+{
+	DWORD dwPid = 0;
+	::GetWindowThreadProcessId(hwnd, &dwPid);
+	if (dwPid != 0)
+	{
+		::AllowSetForegroundWindow(dwPid);
+	}
+}
 #endif
 
 const QString c_strTitle = "Ndd";
@@ -241,6 +254,7 @@ if ((arguments.size() == 4) && (arguments[2] == QString("-n")))
 				copydata.lpData = data.data();  //数据大小
 				copydata.cbData = data.size();  // 指向数据的指针
 
+				allowFirstInstanceForeground(hwnd);
 				::SendMessage(hwnd, WM_COPYDATA, reinterpret_cast<WPARAM>(nullptr), reinterpret_cast<LPARAM>(&copydata));
 			}
 			else
@@ -255,6 +269,7 @@ if ((arguments.size() == 4) && (arguments[2] == QString("-n")))
 						copydata.lpData = data.data();  //数据大小
 						copydata.cbData = data.size();  // 指向数据的指针
 
+						allowFirstInstanceForeground(hwnd);
 						::SendMessage(hwnd, WM_COPYDATA, reinterpret_cast<WPARAM>(nullptr), reinterpret_cast<LPARAM>(&copydata));
 					}
 
@@ -322,6 +337,7 @@ if ((arguments.size() == 4) && (arguments[2] == QString("-n")))
 				copydata.lpData = data.data();  //数据大小
 				copydata.cbData = data.size();  // 指向数据的指针
 
+				allowFirstInstanceForeground(hwnd);
 				::SendMessage(hwnd, WM_COPYDATA, reinterpret_cast<WPARAM>(nullptr), reinterpret_cast<LPARAM>(&copydata));
 			}
 			else

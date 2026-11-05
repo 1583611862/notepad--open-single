@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifdef WIN32
 
@@ -8,7 +8,7 @@
 #define VC_EXTRALEAN
 #endif
 
-//ÏÂÃæNOMINMAX±£Ö¤std::min²»ÖØ¸´¶¨Òå
+//ä¸‹é¢NOMINMAXä¿è¯std::minä¸é‡å¤å®šä¹‰
 #define NOMINMAX
 
 #include <windows.h>

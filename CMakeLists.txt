@@ -7,6 +7,13 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Concurrent Network PrintSupport XmlPatterns)
 
+# MSVC: 源字符集与执行字符集统一为 UTF-8。
+# 否则窄字符串字面量默认按系统 ACP(GBK) 转存，运行时 QString::fromUtf8 按 UTF-8 解码会乱码。
+# 注意：必须保持项目内所有含中文源文件为 UTF-8(BOM) 编码，GBK 文件在此选项下会报 C4819/C2001。
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # qscint 关键依赖库
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/qscint)
 

@@ -1,4 +1,4 @@
-#include "nddpluginapi.h"
+ï»¿#include "nddpluginapi.h"
 #include "ccnotepad.h"
 
 NddPluginApi::NddPluginApi(QObject *parent)
@@ -13,7 +13,7 @@ void NddPluginApi::setMainNotePad(QWidget * pWidget)
 	m_mainNotePad = pWidget;
 }
 
-//×¢ÒâÕâÀïÊµ¼Ê·µ»ØµÄÊÇScintillaEditView
+//æ³¨æ„è¿™é‡Œå®é™…è¿”å›çš„æ˜¯ScintillaEditView
 QsciScintilla* NddPluginApi::getCurrentEidtHandle()
 {
 	CCNotePad* pNotepad = dynamic_cast<CCNotePad*>(m_mainNotePad);
